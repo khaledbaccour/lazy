@@ -1,0 +1,8 @@
+factory-output/
+node_modules/
+dashboard/node_modules/
+.env
+.env.local
+*.log
+.DS_Store
+Thumbs.db
