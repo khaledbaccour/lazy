@@ -2,7 +2,6 @@
 
 **Type `start`. Get a startup.**
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow?style=flat&logo=buy-me-a-coffee)](https://buymeacoffee.com/khaledbaccour)
 [![Claude Code](https://img.shields.io/badge/Runs%20on-Claude%20Code-blue?style=flat)](https://claude.ai/code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 
@@ -188,14 +187,6 @@ PRs welcome. Ideas that would make this better:
 - A deployment agent (auto-deploys to Railway/Render/Vercel)
 - Persistent memory across runs (so the scout remembers past ideas)
 - A web UI for configuring the pipeline without editing CLAUDE.md
-
----
-
-## Support
-
-If this saved you time or gave you a fun afternoon watching agents build a startup:
-
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/khaledbaccour)
 
 ---
 
