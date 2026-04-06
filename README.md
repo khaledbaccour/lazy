@@ -25,7 +25,8 @@ factory-output/
   backend-spec.md   stack, schema, API design, auth, infra — every decision justified
   frontend/         working Next.js app (13+ pages, real components, real data)
   backend/          working Hono API (routes, DB schema, jobs, AI integration)
-  review.md         security audit + spec compliance check across both codebases
+  frontend-review.md  what the frontend reviewer found and fixed
+  backend-review.md   what the backend reviewer found and fixed
 ```
 
 ---
@@ -47,8 +48,9 @@ PHASE 3 — Build (parallel, plan-first)
   frontend-builder   →  plans then builds all pages and components
   backend-builder    →  plans then builds routes, schema, jobs, and AI integration
 
-PHASE 4 — Review (sequential)
-  code-reviewer      →  audits security, correctness, spec compliance across both codebases
+PHASE 4 — Review & Fix (parallel)
+  frontend-reviewer  →  reviews the frontend, fixes every issue found, writes a report
+  backend-reviewer   →  reviews the backend, fixes every issue found, writes a report
 ```
 
 A live dashboard streams the status of every agent in real time.
@@ -132,7 +134,7 @@ The design-strategist chose: Geist Sans + Geist Mono, warm parchment background 
 
 The backend-architect chose: TypeScript + Hono + Neon Postgres + Drizzle + Inngest + OpenAI (GPT-4o for PRD generation, text-embedding-3-small for semantic clustering), deployed to Railway.
 
-The builders produced 44 frontend files and 56 backend files. The code reviewer found and documented 3 medium and 4 low findings — no criticals.
+The builders produced 44 frontend files and 56 backend files. The frontend reviewer found 7 issues and fixed all 7. The backend reviewer found 5 issues and fixed 4 — one left unfixed (requires a real Clerk webhook secret to test).
 
 ---
 

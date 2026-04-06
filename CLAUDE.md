@@ -31,7 +31,8 @@ factory-output/
   backend-spec.md      # Output from Agent 4 (backend + DB architecture)
   frontend/            # Output from Agent 5 (actual frontend code)
   backend/             # Output from Agent 6 (actual backend code)
-  review.md            # Output from Agent 7 (code review of frontend + backend)
+  frontend-review.md   # Output from Agent 7 (frontend review + fixes)
+  backend-review.md    # Output from Agent 8 (backend review + fixes)
 ```
 
 Create this directory before launching agents.
@@ -468,121 +469,179 @@ Launch Agent 5 and Agent 6 simultaneously.
 
 ---
 
-### PHASE 4 — Code Review (Sequential, after Phase 3 completes)
+### PHASE 4 — Review & Fix (Parallel, after Phase 3 completes)
 
 Wait for BOTH `factory-output/frontend/` AND `factory-output/backend/` to be complete before launching Phase 4.
 
+Launch Agent 7 and Agent 8 simultaneously — one per codebase. Each agent reviews its codebase, fixes every issue it finds directly in the files, then writes a report of what it did.
+
 ---
 
-#### Agent 7: The Code Reviewer
+#### Agent 7: The Frontend Reviewer
 
-**Name:** `code-reviewer`  
+**Name:** `frontend-reviewer`  
 **Type:** `general-purpose`  
-**Role:** Review all generated frontend and backend code for bugs, security issues, quality problems, and spec compliance.
+**Role:** Review the frontend code, fix every issue found, and document what was changed.
 
 **Instructions to give this agent:**
 
-> You are a senior staff engineer doing a thorough code review of a freshly generated codebase. You are reviewing two codebases:
+> You are a senior frontend engineer reviewing a freshly generated Next.js codebase. Your job is not just to report problems — **fix every issue you find directly in the files**.
 >
-> 1. `factory-output/frontend/` — a Next.js 14 frontend
-> 2. `factory-output/backend/` — a Hono + TypeScript backend
+> **Codebase to review and fix:** `factory-output/frontend/`
 >
-> Also read the specs the builders were supposed to follow:
-> - `factory-output/frontend-spec.md` — design system the frontend must match
-> - `factory-output/backend-spec.md` — architecture the backend must match
-> - `factory-output/business.md` — product requirements both must satisfy
+> **Specs to check against:**
+> - `factory-output/frontend-spec.md` — every visual decision the builder was supposed to follow
+> - `factory-output/business.md` — product requirements the UI must satisfy
 >
-> **Your review must cover:**
+> **Review and fix the following:**
 >
 > **Security**
-> - Any hardcoded secrets, API keys, or credentials
-> - SQL injection risks (unparameterized queries)
-> - XSS vulnerabilities (unescaped output, unsafe innerHTML)
-> - Missing input validation on API endpoints
-> - Exposed sensitive data in API responses
-> - Insecure authentication or authorization gaps
-> - Missing rate limiting on sensitive endpoints
+> - Hardcoded secrets or API keys → remove, replace with env var references
+> - XSS risks (unsafe raw HTML injection, unsanitized user content rendered as markup) → fix
+> - Missing input sanitization on any form field → add
 >
 > **Correctness**
-> - Logic errors or wrong assumptions
-> - Unhandled error cases or missing error boundaries
-> - Broken or missing TypeScript types (any abuse, missing interfaces)
-> - Incorrect async/await usage or unhandled promise rejections
-> - Missing null/undefined guards
-> - Dead code or unreachable branches
+> - Logic errors or wrong assumptions → fix
+> - Unhandled error states or missing error boundaries → add
+> - Broken or missing TypeScript types (`any` abuse, missing interfaces) → type properly
+> - Incorrect async/await or unhandled promise rejections → fix
+> - Missing null/undefined guards → add
 >
-> **Spec Compliance — Frontend**
-> - Do the CSS variables in `globals.css` match the exact hex values in `frontend-spec.md`?
-> - Are the correct fonts (Geist Sans / Geist Mono) actually loaded and applied?
-> - Are spacing values consistent with the spec's base unit and scale?
-> - Do components have hover, focus, and active states as required?
-> - Is there any Lorem Ipsum or placeholder content that should be realistic?
->
-> **Spec Compliance — Backend**
-> - Does the schema match the tables and columns defined in `backend-spec.md`?
-> - Are all required API endpoints present?
-> - Is env validation (Zod at startup) actually implemented?
-> - Is multi-tenant data isolation (workspace_id scoping) applied to every query?
-> - Are all background jobs from the spec implemented?
+> **Spec Compliance**
+> - CSS variables in `globals.css` must exactly match hex values in `frontend-spec.md` — fix any that don't
+> - Correct fonts must be loaded and applied — fix if missing or wrong
+> - Spacing values must match the spec's scale — fix deviations
+> - All interactive elements must have hover, focus, and active states — add any missing
+> - No Lorem Ipsum or generic placeholder text — replace with realistic content
+> - No hardcoded color values outside CSS variables — fix any inline hex
 >
 > **Code Quality**
-> - Unnecessary complexity or over-engineering
-> - Duplicated logic that should be shared utilities
-> - Missing indexes on frequently queried columns
-> - N+1 query patterns in route handlers
-> - Inconsistent error response formats
-> - Missing or incorrect HTTP status codes
+> - Remove all `console.log` statements
+> - Remove unused imports and dead code
+> - Fix inconsistent naming across components, props, and files
+> - Extract duplicated JSX into reusable components if the same block appears 3+ times
+> - Fix any missing `key` props on mapped elements
+> - Ensure all pages have proper `<title>` and meta description
 >
-> **For each finding, use this format:**
+> **How to work:**
+> 1. Read every file in `factory-output/frontend/src/` systematically
+> 2. Fix each issue immediately in the file before moving on
+> 3. Keep a running log of every change
+> 4. After all fixes, write the report
 >
-> ```
-> ### [SEVERITY] [Category] — File: path/to/file.ts (line X)
-> **Finding:** [What the problem is]
-> **Risk:** [Why it matters]
-> **Fix:** [Concrete code or change to resolve it]
-> ```
->
-> Severity levels: `CRITICAL` (security/data loss) · `HIGH` (broken functionality) · `MEDIUM` (quality/spec drift) · `LOW` (style/minor)
->
-> Write the full review to `factory-output/review.md`:
+> **Write the report to `factory-output/frontend-review.md`:**
 >
 > ```markdown
-> # Code Review — [Product Name]
+> # Frontend Review & Fix Report — [Product Name]
 >
 > ## Summary
-> - Files reviewed: [N frontend files, N backend files]
-> - Total findings: [N] ([N] critical, [N] high, [N] medium, [N] low)
-> - Overall assessment: [one sentence verdict]
+> - Files reviewed: [N]
+> - Issues found: [N] ([N] critical, [N] high, [N] medium, [N] low)
+> - Issues fixed: [N]
+> - Issues left unfixed: [N] (requires runtime env vars or out of scope)
 >
-> ## Critical Findings
-> [All CRITICAL items]
+> ## Fixes Applied
+> ### [File path]
+> - [What was wrong] → [What was done to fix it]
 >
-> ## High Findings
-> [All HIGH items]
+> ## Unfixed Issues
+> [Any issue that could not be fixed automatically, with explanation]
 >
-> ## Medium Findings
-> [All MEDIUM items]
+> ## Spec Compliance After Fixes
+> [Checklist: ✓ met or ✗ still missing]
 >
-> ## Low Findings
-> [All LOW items]
->
-> ## Spec Compliance
-> ### Frontend vs frontend-spec.md
-> [Checklist of spec requirements — ✓ met or ✗ missed with details]
->
-> ### Backend vs backend-spec.md
-> [Checklist of spec requirements — ✓ met or ✗ missed with details]
->
-> ## What Was Done Well
-> [3–5 genuinely good things about the code — be specific]
->
-> ## Recommended Fix Order
-> [Prioritized list: fix these first, in this order, and why]
+> ## What Was Already Good
+> [3–5 specific things the frontend builder did well]
 > ```
 
-**Input:** `factory-output/frontend/`, `factory-output/backend/`, `factory-output/frontend-spec.md`, `factory-output/backend-spec.md`, `factory-output/business.md`  
-**Output:** `factory-output/review.md`  
-**On completion:** Report findings summary to team lead. Pipeline is done.
+**Input:** `factory-output/frontend/`, `factory-output/frontend-spec.md`, `factory-output/business.md`  
+**Output:** fixed files in `factory-output/frontend/` + `factory-output/frontend-review.md`  
+**On completion:** Message team lead with total issues found, total fixed, and any unfixed items.
+
+---
+
+#### Agent 8: The Backend Reviewer
+
+**Name:** `backend-reviewer`  
+**Type:** `general-purpose`  
+**Role:** Review the backend code, fix every issue found, and document what was changed.
+
+**Instructions to give this agent:**
+
+> You are a senior backend engineer reviewing a freshly generated Hono + TypeScript API. Your job is not just to report problems — **fix every issue you find directly in the files**.
+>
+> **Codebase to review and fix:** `factory-output/backend/`
+>
+> **Specs to check against:**
+> - `factory-output/backend-spec.md` — every architectural decision the builder was supposed to follow
+> - `factory-output/business.md` — product requirements the API must satisfy
+>
+> **Review and fix the following:**
+>
+> **Security**
+> - Hardcoded secrets, API keys, or credentials → remove, replace with `env.` references
+> - Unparameterized queries (SQL injection risk) → rewrite using Drizzle's query builder
+> - Missing input validation on any endpoint → add Zod schema and validate
+> - Missing auth middleware on any protected route → add
+> - Sensitive fields exposed in API responses (password hashes, internal tokens) → strip them
+> - Missing rate limiting on auth or write endpoints → add
+>
+> **Correctness**
+> - Logic errors in route handlers → fix
+> - Unhandled promise rejections or missing try/catch → add error handling
+> - Missing null checks before database reads → add guards
+> - Wrong HTTP status codes (e.g. 200 on creation instead of 201) → fix
+> - Missing `workspace_id` scoping on any database query → add (multi-tenant isolation)
+> - Background jobs missing failure handling or retries → fix
+>
+> **Spec Compliance**
+> - Every table in `backend-spec.md` must exist in the schema — add any missing
+> - Every required API endpoint must exist — add any missing
+> - Env validation via Zod at startup must be present — add if missing
+> - All background jobs listed in the spec must be implemented — add any missing
+> - Prefixed ID generation (`sig_`, `rec_`, `prd_`, etc.) must be consistent — fix any that aren't
+>
+> **Code Quality**
+> - Remove unused imports and dead code
+> - Extract duplicated middleware or validation logic into shared helpers
+> - Fix inconsistent error response shapes — all errors must follow the standard format
+> - Add missing indexes to the schema for columns used in frequent WHERE clauses
+> - Fix N+1 query patterns — use joins or batch queries
+>
+> **How to work:**
+> 1. Read every file in `factory-output/backend/src/` systematically
+> 2. Fix each issue immediately in the file before moving on
+> 3. Keep a running log of every change
+> 4. After all fixes, write the report
+>
+> **Write the report to `factory-output/backend-review.md`:**
+>
+> ```markdown
+> # Backend Review & Fix Report — [Product Name]
+>
+> ## Summary
+> - Files reviewed: [N]
+> - Issues found: [N] ([N] critical, [N] high, [N] medium, [N] low)
+> - Issues fixed: [N]
+> - Issues left unfixed: [N] (with reason)
+>
+> ## Fixes Applied
+> ### [File path]
+> - [What was wrong] → [What was done to fix it]
+>
+> ## Unfixed Issues
+> [Any issue that could not be fixed automatically, with explanation]
+>
+> ## Spec Compliance After Fixes
+> [Checklist: ✓ met or ✗ still missing]
+>
+> ## What Was Already Good
+> [3–5 specific things the backend builder did well]
+> ```
+
+**Input:** `factory-output/backend/`, `factory-output/backend-spec.md`, `factory-output/business.md`  
+**Output:** fixed files in `factory-output/backend/` + `factory-output/backend-review.md`  
+**On completion:** Message team lead with total issues found, total fixed, and any unfixed items.
 
 ---
 
@@ -679,7 +738,8 @@ Alternatively: the dashboard can use `mcp__commands__run_process` to directly in
     "backend-architect": { "status": "pending", "log": [] },
     "frontend-builder": { "status": "pending", "log": [] },
     "backend-builder": { "status": "pending", "log": [] },
-    "code-reviewer": { "status": "pending", "log": [] }
+    "frontend-reviewer": { "status": "pending", "log": [] },
+    "backend-reviewer": { "status": "pending", "log": [] }
   }
 }
 ```
@@ -702,7 +762,8 @@ TeamCreate({
     { name: "backend-architect",  role: "Backend architecture specification author" },
     { name: "frontend-builder",   role: "Frontend code implementer" },
     { name: "backend-builder",    role: "Backend code implementer" },
-    { name: "code-reviewer",      role: "Frontend and backend code reviewer" }
+    { name: "frontend-reviewer",  role: "Frontend code reviewer and fixer" },
+    { name: "backend-reviewer",   role: "Backend code reviewer and fixer" }
   ]
 })
 ```
@@ -730,9 +791,9 @@ Example update flow:
 10. Write status.json: frontend-builder → running, backend-builder → running
 11. Launch both in parallel (await both)
 12. Write status.json: frontend-builder → complete, backend-builder → complete
-13. Write status.json: code-reviewer → running
-14. Launch code-reviewer agent (await completion)
-15. Write status.json: code-reviewer → complete, phase → done
+13. Write status.json: frontend-reviewer → running, backend-reviewer → running
+14. Launch both in parallel (await both)
+15. Write status.json: frontend-reviewer → complete, backend-reviewer → complete, phase → done
 ```
 
 ---
@@ -779,9 +840,12 @@ Output files:
   factory-output/backend-spec.md
   factory-output/frontend/
   factory-output/backend/
-  factory-output/review.md
+  factory-output/frontend-review.md
+  factory-output/backend-review.md
 
-Review summary: [N critical, N high, N medium, N low findings]
+Review summary:
+  Frontend — [N found, N fixed, N unfixed]
+  Backend  — [N found, N fixed, N unfixed]
 
 Dashboard: http://localhost:3004
 ```
